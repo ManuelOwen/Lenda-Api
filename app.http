@@ -1,0 +1,314 @@
+@url = http://localhost:8000/api/v1
+@adminToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUwLCJlbWFpbCI6Im1hbnVlbDIyQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NzMzNzg2MywiZXhwIjoxNzU3MzQxNDYzfQ.KbrpzF-bTTra1H0pk5bF7WSXSwW-RyY0jRNkYcNxbww
+@userToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE5LCJlbWFpbCI6InRlbkBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzUxNDU0MjMyLCJleHAiOjE3NTE0NTc4MzJ9.4-loc3xi9kvriyaGWLYdeMeobGdAq0Om8p2U7GhYXMA
+### get all users
+
+
+GET {{url}}/users
+# Authorization: Bearer {{adminToken}}
+
+### seed users
+POST {{url}}/seed/users
+
+### seed database (all data)
+POST {{url}}/seed
+
+
+
+
+
+
+
+### get users by id
+GET {{url}}/users/23
+Authorization: Bearer {{adminToken}}
+### create a new user
+POST {{url}}/auth/register
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "ian@gmail.com",
+  "name": "Kai ian",
+   "password": "Password123",
+  "phoneNumber": "+254744332675",
+  "role": "user"
+}
+### update a user
+PUT {{url}}/users/23
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "senge@gmail.com",
+  "name": "Kai Senge",
+   "password": "Password123",
+  "phoneNumber": "+254703498941",
+  "role": "user"
+}
+### delete a user
+DELETE {{url}}/users/2
+### login a user
+POST {{url}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "senge@gmail.com",
+  "password": "password123"
+}
+### login as an admin
+POST {{url}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "manuel22@gmail.com",
+  "password": "Password123"
+}
+
+### create a new claim
+POST {{url}}/claims   
+# Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "user_id": 19,
+  "policy_number": 123456,
+  "claim_type": "Motor",
+  "incident_date": "2023-10-01",
+  "estimated_loss": 5000,
+  "description": "Car accident on highway",
+  "status": "Pending",
+  "first_name": "Ten",
+  "last_name": "Doe",
+  "phone": "+254700123456",
+  "email": "ten@example.com",
+"supporting_documents":[""]
+
+
+
+} 
+### get all claims
+GET {{url}}/claims
+Authorization: Bearer {{adminToken}}
+### get claim by id
+GET {{url}}/claims/1
+
+### update a claim
+PUT {{url}}/claims/1
+
+# Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Approved",
+  "estimated_loss": 6000,
+  "description": "Updated description of the incident"
+}
+
+### delete a claim
+DELETE {{url}}/claims/1
+### seed quotes
+POST {{url}}/seed/quotes
+### get all quotes
+GET {{url}}/quotes
+### get quote by id
+GET {{url}}/quotes/1
+### create a new quote
+POST {{url}}/quotes
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "phone": "+254700111222",
+  "details": "Home insurance for 3-bedroom house",
+  "service_type": "Home Insurance",
+  "estimated_premium": 1200.5,
+  "status": "Pending"
+}
+### update a quote
+PUT {{url}}/quotes/1
+Content-Type: application/json
+{
+  "status": "Approved",
+  "estimated_premium": 1300.75,
+  "details": "Updated details about the insurance coverage"
+}
+### delete a quote
+DELETE {{url}}/quotes/1
+### seed consultations
+POST {{url}}/seed/consultations
+### get all consultations
+GET {{url}}/consultations
+
+### get consultation by id
+GET {{url}}/consultations/1
+### create a new consultation
+POST {{url}}/consultations
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "name": "Bob Smith",
+  "email": "bob@example.com",
+  "phone": "+254700333444",
+  "country": "Kenya",
+  "timezone": "Africa/Nairobi",
+  "service_interest": "Security Audit",
+  "service_type": "Audit",
+  "scheduled_at": "2023-10-02T10:00:00Z",
+  "status": "pending",
+  "meeting_link": "https://meet.example.com/bob",
+  "duration": 45,
+  "notes": "Discuss security protocols" 
+}
+### update a consultation
+PUT {{url}}/consultations/3
+Content-Type: application/json
+
+{
+  "status": "confirmed",
+  "meeting_link": "https://meet.example.com/bob-updated",
+  "duration": 60,
+  "notes": "Follow-up on security protocols"
+}
+### delete a consultation
+DELETE {{url}}/consultations/3
+
+### seed diaspora requests
+POST {{url}}/seed/diaspora-requests
+### get all diaspora requests
+GET {{url}}/diaspora-requests
+### get diaspora request by id
+GET {{url}}/diaspora-requests/1
+### create a new diaspora request
+POST {{url}}/diaspora-requests
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "name": "Charlie Brown",
+  "email": "charlie@example.com",
+  "phone": "+254704004004",
+  "country": "Kenya",
+  "details": "Assistance needed for relocation process.",
+  "status": "pending"
+}
+### update a diaspora request
+PUT {{url}}/diaspora-requests/1
+Content-Type: application/json
+
+{
+  "status": "in review",
+  "details": "Updated details about the relocation assistance."
+}
+### delete a diaspora request
+DELETE {{url}}/diaspora-requests/1
+
+### seed outsourcing requests
+POST {{url}}/seed/outsourcing-requests
+### get all outsourcing requests
+GET {{url}}/outsourcing-requests
+### get outsourcing request by id
+GET {{url}}/outsourcing-requests/1
+### create a new outsourcing request
+POST {{url}}/outsourcing-requests
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "organization_name": "Diana Prince",
+  "core_functions": "Software Development",
+  "location": "Nairobi, Kenya",
+  "address": "123 Tech Street",
+  "email": "diana@example.com",
+  "services": {
+    "IT Consulting": true,
+    "Software Development": true
+  },
+  "nature_of_outsourcing": "Full Project",
+  "budget_range": "5000-10000",
+  "status": "pending"
+}
+### update an outsourcing request
+PUT {{url}}/outsourcing-requests/1
+Content-Type: application/json
+
+{
+  "status": "reviewed",
+  "budget_range": "7000-12000",
+  "services": {
+    "IT Consulting": true,
+    "Software Development": true,
+    "Cybersecurity": true
+  }
+}
+### delete an outsourcing request
+DELETE {{url}}/outsourcing-requests/1
+
+### seed payments
+POST {{url}}/seed/payments
+### get all payments
+GET {{url}}/payments
+
+### get payment by id
+GET {{url}}/payments/1
+### create a new payment
+POST {{url}}/payments
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "amount": 250.75,
+  "currency": "USD",
+  "method": "Credit Card",
+  "status": "completed"
+    
+}
+### update a payment
+PUT {{url}}/payments/1
+Content-Type: application/json
+
+{
+  "status": "refunded",
+  "amount": 200.50,
+  "method": "PayPal"
+}
+### delete a payment
+DELETE {{url}}/payments/1
+
+
+
+
+
+
+
+### seed all data
+@prodUrl = https://gallo-api.onrender.com/api/v1
+POST {{prodUrl}}/quotes
+Content-Type: application/json
+
+
+{
+    "firstName": "Aiko",
+    "lastName": "Williamson",
+    "email": "cijulavu@mailinator.com",
+    "phone": "+1 (219) 859-8798",
+    "location": "Voluptatem officia s",
+    "product": "Fire Insurance Proposal Form",
+    "propertyType": "",
+    "propertyValue": "",
+    "constructionType": "",
+    "occupancy": "",
+    "budget": "50k-100k",
+    "coverage": "2-years",
+    "details": "Aliquip asperiores n",
+    "contactMethod": "whatsapp",
+    "bestTime": "afternoon",
+    "document": {},
+    "terms": true,
+    "selectedProduct": "Fire Insurance Proposal Form",
+    "status": "SUBMITTED",
+    "timestamp": "2025-09-12T14:34:06.030Z"
+}
