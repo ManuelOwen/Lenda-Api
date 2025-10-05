@@ -312,3 +312,23 @@ Content-Type: application/json
     "status": "SUBMITTED",
     "timestamp": "2025-09-12T14:34:06.030Z"
 }
+
+
+
+### Initiate STK Push
+POST {{url}}/payments/initialize
+Content-Type: application/json
+
+{
+  "phoneNumber":"254768133220",
+  "amount":1
+}
+
+
+### Initiate STK Push
+POST {{url}}/payments/status
+Content-Type: application/json
+
+{
+  "transactionId":"ws_CO_26092025193820972127911792" 
+}

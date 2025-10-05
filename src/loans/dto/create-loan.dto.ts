@@ -14,6 +14,9 @@ export class CreateLoanDto {
     @IsNumber()
     @IsNotEmpty()
     loan_amount:number
+    @IsNumber()
+    @IsNotEmpty()
+    service_fee:number
 
 
 
