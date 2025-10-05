@@ -10,4 +10,4 @@ import { MPesaService } from 'src/payments/m-pesa/m-pesa.service';
   controllers: [LoansController],
   providers: [LoansService, MPesaService],
 })
-export class LoansModule { }
+export class LoansModule {}

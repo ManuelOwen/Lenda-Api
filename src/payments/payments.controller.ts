@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Put, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  ParseIntPipe,
+  Put,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -14,10 +23,15 @@ interface ApiResponse<T = any> {
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService, private readonly mpesaService: MPesaService) { }
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly mpesaService: MPesaService,
+  ) {}
 
   @Post()
-  create(@Body() createPaymentDto: CreatePaymentDto): Promise<ApiResponse<Payment>> {
+  create(
+    @Body() createPaymentDto: CreatePaymentDto,
+  ): Promise<ApiResponse<Payment>> {
     return this.paymentsService.create(createPaymentDto);
   }
 
@@ -40,22 +54,26 @@ export class PaymentsController {
   }
 
   @Post('initialize')
-  initiateSTKTransaction(@Body() body: { phoneNumber: string, amount: number }) {
-    this.mpesaService.sendStkPush(body.phoneNumber, body.amount)
+  initiateSTKTransaction(
+    @Body() body: { phoneNumber: string; amount: number },
+  ) {
+    this.mpesaService.sendStkPush(body.phoneNumber, body.amount);
   }
   @Post('callback')
   STKCallback(@Body() body: any) {
-    console.dir(body, { depth: null })
-    this.mpesaService.stkCallback(body)
+    console.dir(body, { depth: null });
+    this.mpesaService.stkCallback(body);
   }
   @Post('status')
   transactionStatus(@Body() body: { transactionId: string }) {
-    console.log(body)
-    this.mpesaService.transactionStatus(body.transactionId)
+    console.log(body);
+    this.mpesaService.transactionStatus(body.transactionId);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number):  Promise<ApiResponse<Payment>> {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponse<Payment>> {
     return this.paymentsService.findOne(id);
   }
 

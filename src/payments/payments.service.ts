@@ -19,22 +19,48 @@ export class PaymentsService {
     private readonly paymentRepository: Repository<Payment>,
   ) {}
 
-  async create(createPaymentDto: CreatePaymentDto): Promise<ApiResponse<Payment>> {
+  async create(
+    createPaymentDto: CreatePaymentDto,
+  ): Promise<ApiResponse<Payment>> {
     try {
       const newPayment = this.paymentRepository.create(createPaymentDto);
       const saved = await this.paymentRepository.save(newPayment);
-      return { success: true, message: 'Payment created successfully', data: saved };
-    } catch (error) {
-      return { success: false, message: 'Failed to create payment', error: error.message };
+      return {
+        success: true,
+        message: 'Payment created successfully',
+        data: saved,
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        message: 'Failed to create payment',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occured while performing this operation',
+      };
     }
   }
 
   async findAll(): Promise<ApiResponse<Payment[]>> {
     try {
-      const items = await this.paymentRepository.find({ order: { created_at: 'DESC' } });
-      return { success: true, message: 'Payments retrieved successfully', data: items };
-    } catch (error) {
-      return { success: false, message: 'Failed to retrieve payments', error: error.message };
+      const items = await this.paymentRepository.find({
+        order: { created_at: 'DESC' },
+      });
+      return {
+        success: true,
+        message: 'Payments retrieved successfully',
+        data: items,
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        message: 'Failed to retrieve payments',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occured while performing this operation',
+      };
     }
   }
 
@@ -42,22 +68,48 @@ export class PaymentsService {
     try {
       const item = await this.paymentRepository.findOne({ where: { id } });
       if (!item) throw new NotFoundException(`Payment with id ${id} not found`);
-      return { success: true, message: 'Payment found successfully', data: item };
+      return {
+        success: true,
+        message: 'Payment found successfully',
+        data: item,
+      };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      return { success: false, message: `Failed to find payment with id ${id}`, error: error.message };
+      return {
+        success: false,
+        message: `Failed to find payment with id ${id}`,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occured while performing this operation',
+      };
     }
   }
 
-  async update(id: number, updatePaymentDto: UpdatePaymentDto): Promise<ApiResponse<Payment>> {
+  async update(
+    id: number,
+    updatePaymentDto: UpdatePaymentDto,
+  ): Promise<ApiResponse<Payment>> {
     try {
       const item = await this.paymentRepository.findOne({ where: { id } });
       if (!item) throw new NotFoundException(`Payment with id ${id} not found`);
-      const saved = await this.paymentRepository.save({ ...item, ...updatePaymentDto });
-      return { success: true, message: 'Payment updated successfully', data: saved };
+      const saved = await this.paymentRepository.save({
+        ...item,
+        ...updatePaymentDto,
+      });
+      return {
+        success: true,
+        message: 'Payment updated successfully',
+        data: saved,
+      };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      return { success: false, message: `Failed to update payment with id ${id}`, error: error.message };
+      return {
+        success: false,
+        message: `Failed to update payment with id ${id}`,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occured while performing this operation',
+      };
     }
   }
 
@@ -66,24 +118,20 @@ export class PaymentsService {
       const item = await this.paymentRepository.findOne({ where: { id } });
       if (!item) throw new NotFoundException(`Payment with id ${id} not found`);
       await this.paymentRepository.remove(item);
-      return { success: true, message: 'Payment deleted successfully', data: null };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      return { success: false, message: `Failed to delete payment with id ${id}`, error: error.message };
-    }
-  }
-
-  // Temporary verification stub – replace with provider API verification as needed
-  async verifyByReference(reference: string, provider?: string): Promise<ApiResponse<{ reference: string; provider?: string }>> {
-    try {
-      // TODO: Integrate with Paystack (or other provider) verify endpoint using server secret
       return {
         success: true,
-        message: 'Verification callback received',
-        data: { reference, provider },
+        message: 'Payment deleted successfully',
+        data: null,
       };
     } catch (error) {
-      return { success: false, message: 'Verification failed', error: (error as Error).message };
+      return {
+        success: false,
+        message: `Failed to delete payment with id ${id}`,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occured while performing this operation',
+      };
     }
   }
 }

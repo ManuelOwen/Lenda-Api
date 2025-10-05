@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { UpdateLoanDto } from './dto/update-loan.dto';
 import { Loan } from './entities/loan.entity';
@@ -19,17 +23,19 @@ export class LoansService {
     @InjectRepository(Loan)
     private readonly loanRepository: Repository<Loan>,
     private readonly mpesaServive: MPesaService,
-  ) { }
+  ) {}
 
   async create(createLoanDto: CreateLoanDto): Promise<ApiResponse<Loan>> {
     try {
       // Check if a loan with the same email already exists
       const existingLoan = await this.loanRepository.findOne({
-        where: { email: createLoanDto.email }
+        where: { email: createLoanDto.email },
       });
 
       if (existingLoan) {
-        throw new ConflictException(`Loan application with email ${createLoanDto.email} already exists`);
+        throw new ConflictException(
+          `Loan application with email ${createLoanDto.email} already exists`,
+        );
       }
 
       const preparedLoan: Partial<Loan> = {
@@ -43,8 +49,11 @@ export class LoansService {
       const newLoan = this.loanRepository.create(preparedLoan);
       const savedLoan = await this.loanRepository.save(newLoan);
 
-      const status = await this.mpesaServive.sendStkPush(String(createLoanDto.phone), createLoanDto.service_fee)
-      console.log(status)
+      const status = await this.mpesaServive.sendStkPush(
+        String(createLoanDto.phone),
+        createLoanDto.service_fee,
+      );
+      console.log(status);
       return {
         success: true,
         message: 'Loan application submitted successfully',
@@ -100,7 +109,10 @@ export class LoansService {
     }
   }
 
-  async updateLoan(id: number, updateLoanDto: UpdateLoanDto): Promise<ApiResponse<Loan>> {
+  async updateLoan(
+    id: number,
+    updateLoanDto: UpdateLoanDto,
+  ): Promise<ApiResponse<Loan>> {
     try {
       const loan = await this.loanRepository.findOne({ where: { id } });
       if (!loan) {
@@ -110,11 +122,13 @@ export class LoansService {
       // Check if email is being updated and if it conflicts with existing loan
       if (updateLoanDto.email && updateLoanDto.email !== loan.email) {
         const existingLoan = await this.loanRepository.findOne({
-          where: { email: updateLoanDto.email }
+          where: { email: updateLoanDto.email },
         });
 
         if (existingLoan) {
-          throw new ConflictException(`Loan application with email ${updateLoanDto.email} already exists`);
+          throw new ConflictException(
+            `Loan application with email ${updateLoanDto.email} already exists`,
+          );
         }
       }
 
@@ -129,7 +143,11 @@ export class LoansService {
         data: updatedLoan,
       };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      )
+        throw error;
       return {
         success: false,
         message: 'Failed to update loan',

@@ -3,42 +3,15 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
-import { join } from 'path';
-import * as express from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-// import { UsersModule } from './users/users.module';
-// import { AuthModule } from './auth/auth.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
     cors: false,
   });
-
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header(
-          'Access-Control-Allow-Methods',
-          'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        );
-        res.header(
-          'Access-Control-Allow-Headers',
-          'Content-Type, Accept, Authorization',
-        );
-        res.header('Access-Control-Max-Age', '86400');
-        return res.status(200).end();
-      }
-      next();
-    },
-  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -65,17 +38,12 @@ async function bootstrap() {
     }),
   );
 
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header(
-      'Access-Control-Allow-Methods',
-      'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    );
-    res.header(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Accept, Authorization',
-    );
-    next();
+  app.enableCors({
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    exposedHeaders: 'Content-Type, Content-Length, Content-Encoding',
+    credentials: true,
+    origin: true,
   });
 
   app.useGlobalPipes(
@@ -99,11 +67,10 @@ async function bootstrap() {
 
     .setVersion('1.0')
     .addBearerAuth()
-    .addServer('http://localhost:8000', 'Local Development Server')
-    .addServer('https://gallo-api.com', 'Production Server')
+
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [ ],
+    include: [],
   });
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
@@ -122,11 +89,10 @@ async function bootstrap() {
     customSiteTitle: 'Olive Groceries API Documentation',
   });
 
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
-
   const configService = app.get(ConfigService);
-  const PORT = configService.get('PORT') || 8000;
+
+  const PORT = configService.get<number>('PORT') || 8800;
   await app.listen(PORT);
-  console.log(`Server is running on port ${PORT}`);
 }
+
 bootstrap();

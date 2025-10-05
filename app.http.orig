@@ -60,7 +60,7 @@ Content-Type: application/json
 POST {{url}}/auth/login
 Content-Type: application/json
 
-
+{
   "email": "manuel22@gmail.com",
   "password": "Password123"
 }

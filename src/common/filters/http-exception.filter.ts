@@ -23,7 +23,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let error: string = 'Internal Server Error';
 
     if (exception instanceof HttpException) {
-      // Handle known HTTP exceptions
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
@@ -31,17 +30,27 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = exceptionResponse;
         error = exception.name;
       } else if (typeof exceptionResponse === 'object') {
-        // If validation errors are present, include them in the response
-        const responseObj = exceptionResponse as Record<string, any>;
+        const responseObj = exceptionResponse as Record<string, unknown>;
+        const errorMsg =
+          typeof responseObj.error === 'string'
+            ? responseObj.error
+            : exception.name;
+        const messageMsg =
+          typeof responseObj.message === 'string'
+            ? responseObj.message
+            : 'Validation failed';
+        const detailsMsg = Array.isArray(responseObj.message)
+          ? responseObj.message
+          : [responseObj.message];
+
         message = {
-          error: responseObj.error || exception.name,
-          message: responseObj.message || 'Validation failed',
-          details: Array.isArray(responseObj.message) ? responseObj.message : [responseObj.message]
+          error: errorMsg,
+          message: messageMsg,
+          details: detailsMsg,
         };
-        error = responseObj.error || exception.name;
+        error = errorMsg;
       }
     } else if (exception instanceof QueryFailedError) {
-      // Handle database errors
       status = HttpStatus.BAD_REQUEST;
 
       if (
@@ -94,7 +103,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = 'Database Error';
       }
     } else {
-      // Handle unknown errors - already initialized above
       message = {
         message: 'Internal server error occurred',
         suggestion:
@@ -103,7 +111,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error = 'Internal Server Error';
     }
 
-    // Log the error for debugging
     this.logger.error(`${request.method} ${request.url} - Status: ${status}`, {
       exception:
         exception instanceof Error ? exception.message : String(exception),
@@ -121,7 +128,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       },
     });
 
-    // Send error response
     response.status(status).json({
       success: false,
       statusCode: status,

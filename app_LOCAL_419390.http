@@ -60,13 +60,13 @@ Content-Type: application/json
 POST {{url}}/auth/login
 Content-Type: application/json
 
-
+{
   "email": "manuel22@gmail.com",
   "password": "Password123"
 }
 
 ### create a new claim
-POST {{url}}/claims
+POST {{url}}/claims   
 # Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
@@ -86,7 +86,7 @@ Content-Type: application/json
 
 
 
-}
+} 
 ### get all claims
 GET {{url}}/claims
 Authorization: Bearer {{adminToken}}
@@ -161,7 +161,7 @@ Content-Type: application/json
   "status": "pending",
   "meeting_link": "https://meet.example.com/bob",
   "duration": 45,
-  "notes": "Discuss security protocols"
+  "notes": "Discuss security protocols" 
 }
 ### update a consultation
 PUT {{url}}/consultations/3
@@ -264,7 +264,7 @@ Content-Type: application/json
   "currency": "USD",
   "method": "Credit Card",
   "status": "completed"
-
+    
 }
 ### update a payment
 PUT {{url}}/payments/1
@@ -286,7 +286,7 @@ DELETE {{url}}/payments/1
 
 ### seed all data
 @prodUrl = https://gallo-api.onrender.com/api/v1
-POST {{url}}/ini
+POST {{prodUrl}}/quotes
 Content-Type: application/json
 
 
@@ -312,7 +312,6 @@ Content-Type: application/json
     "status": "SUBMITTED",
     "timestamp": "2025-09-12T14:34:06.030Z"
 }
-<<<<<<< HEAD
 
 
 
@@ -333,5 +332,3 @@ Content-Type: application/json
 {
   "transactionId":"ws_CO_26092025193820972127911792" 
 }
-=======
->>>>>>> 63cff68 (Removed unused files and variables)

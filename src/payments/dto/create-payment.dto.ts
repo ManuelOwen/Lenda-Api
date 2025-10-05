@@ -1,4 +1,10 @@
-import { IsNumber, IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
+import {
+  IsNumber,
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsObject,
+} from 'class-validator';
 import { paymentStatus } from '../entities/payment.entity';
 
 export class CreatePaymentDto {
