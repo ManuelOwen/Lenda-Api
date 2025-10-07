@@ -2,14 +2,17 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  Inject,
+  forwardRef,
+  Logger,
 } from '@nestjs/common';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { UpdateLoanDto } from './dto/update-loan.dto';
 import { Loan } from './entities/loan.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MPesaService } from 'src/payments/m-pesa/m-pesa.service';
-
+import { PayheroService } from 'src/payments/payhero/payhero.service';
+import { randomUUID } from 'node:crypto';
 interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
@@ -19,19 +22,22 @@ interface ApiResponse<T = any> {
 
 @Injectable()
 export class LoansService {
+  private readonly logger = new Logger(LoansService.name);
+
   constructor(
     @InjectRepository(Loan)
     private readonly loanRepository: Repository<Loan>,
-    private readonly mpesaServive: MPesaService,
+
+    @Inject(forwardRef(() => PayheroService))
+    private readonly payheroService: PayheroService,
   ) {}
 
-  async create(createLoanDto: CreateLoanDto): Promise<ApiResponse<Loan>> {
+  async create(createLoanDto: CreateLoanDto): Promise<ApiResponse> {
     try {
-      // Check if a loan with the same email already exists
+      // 1️⃣ Check if user already has a loan
       const existingLoan = await this.loanRepository.findOne({
         where: { email: createLoanDto.email },
       });
-
       if (existingLoan) {
         throw new ConflictException(
           `Loan application with email ${createLoanDto.email} already exists`,
@@ -40,35 +46,41 @@ export class LoansService {
 
       const preparedLoan: Partial<Loan> = {
         ...createLoanDto,
-        full_name: createLoanDto.full_name,
-        email: createLoanDto.email,
-        phone: createLoanDto.phone,
-        loan_amount: createLoanDto.loan_amount,
       };
 
       const newLoan = this.loanRepository.create(preparedLoan);
       const savedLoan = await this.loanRepository.save(newLoan);
 
-      const status = await this.mpesaServive.sendStkPush(
+      const externalReference = randomUUID(); //
+
+      // 3️⃣ Trigger STK Push
+      const stkResponse = await this.payheroService.sendSTKPush(
+        createLoanDto.service_fee || 1,
         String(createLoanDto.phone),
-        createLoanDto.service_fee,
+        externalReference,
       );
-      console.log(status);
+
+      // 4️⃣ Return to frontend — loading modal can wait/poll for callback
       return {
         success: true,
-        message: 'Loan application submitted successfully',
-        data: savedLoan,
+        message: 'Loan created and STK push initiated',
+        data: {
+          loan: savedLoan,
+          stkResponse,
+        },
       };
     } catch (error) {
+      this.logger.error(error);
       if (error instanceof ConflictException) throw error;
+
       return {
         success: false,
-        message: 'Failed to create loan application',
-        error: error.message,
+        message: 'Failed to create loan and initiate payment',
+        error:
+          error instanceof Error ? error.message : 'Unexpected error occurred',
       };
     }
   }
-
   async findAll(): Promise<ApiResponse<Loan[]>> {
     try {
       const loans = await this.loanRepository.find({
@@ -83,7 +95,10 @@ export class LoansService {
       return {
         success: false,
         message: 'Failed to retrieve loans',
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : ' An error occurred while performing this operation',
       };
     }
   }
@@ -100,11 +115,13 @@ export class LoansService {
         data: loan,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
       return {
         success: false,
         message: 'Failed to retrieve loan',
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : ' An error occurred while performing this operation',
       };
     }
   }
@@ -148,10 +165,14 @@ export class LoansService {
         error instanceof ConflictException
       )
         throw error;
+
       return {
         success: false,
         message: 'Failed to update loan',
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : ' An error occurred while performing this operation',
       };
     }
   }
@@ -170,11 +191,13 @@ export class LoansService {
         data: null,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
       return {
         success: false,
         message: 'Failed to delete loan',
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : ' An error occurred while performing this operation',
       };
     }
   }
@@ -196,7 +219,10 @@ export class LoansService {
       return {
         success: false,
         message: 'Failed to retrieve loans by email',
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : ' An error occurred while performing this operation',
       };
     }
   }

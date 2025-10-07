@@ -86,13 +86,14 @@ async function bootstrap() {
       .swagger-ui .topbar { display: none; }
       .swagger-ui .info { margin-bottom: 20px; }
     `,
-    customSiteTitle: 'Olive Groceries API Documentation',
   });
 
   const configService = app.get(ConfigService);
 
   const PORT = configService.get<number>('PORT') || 8800;
-  await app.listen(PORT);
+  await app.listen(PORT, () => {
+    console.log('App started on port', +PORT);
+  });
 }
 
 bootstrap();
