@@ -34,7 +34,6 @@ export class LoansService {
 
   async create(createLoanDto: CreateLoanDto): Promise<ApiResponse> {
     try {
-      // 1️⃣ Check if user already has a loan
       const existingLoan = await this.loanRepository.findOne({
         where: { email: createLoanDto.email },
       });
@@ -44,23 +43,23 @@ export class LoansService {
         );
       }
 
+      const externalReference = randomUUID();
+
+      const stkResponse = await this.payheroService.sendSTKPush(
+        createLoanDto.service_fee || 1,
+        `0${String(createLoanDto.phone).substring(3)}`,
+        externalReference,
+      );
+
       const preparedLoan: Partial<Loan> = {
         ...createLoanDto,
+        external_reference: externalReference,
+        paid_service_fee: false,
       };
 
       const newLoan = this.loanRepository.create(preparedLoan);
       const savedLoan = await this.loanRepository.save(newLoan);
 
-      const externalReference = randomUUID(); //
-
-      // 3️⃣ Trigger STK Push
-      const stkResponse = await this.payheroService.sendSTKPush(
-        createLoanDto.service_fee || 1,
-        String(createLoanDto.phone),
-        externalReference,
-      );
-
-      // 4️⃣ Return to frontend — loading modal can wait/poll for callback
       return {
         success: true,
         message: 'Loan created and STK push initiated',
@@ -84,7 +83,7 @@ export class LoansService {
   async findAll(): Promise<ApiResponse<Loan[]>> {
     try {
       const loans = await this.loanRepository.find({
-        order: { id: 'DESC' }, // Using id since created_at doesn't exist in your entity
+        order: { id: 'DESC' },
       });
       return {
         success: true,
@@ -136,7 +135,6 @@ export class LoansService {
         throw new NotFoundException(`Loan with id ${id} not found`);
       }
 
-      // Check if email is being updated and if it conflicts with existing loan
       if (updateLoanDto.email && updateLoanDto.email !== loan.email) {
         const existingLoan = await this.loanRepository.findOne({
           where: { email: updateLoanDto.email },
@@ -202,7 +200,6 @@ export class LoansService {
     }
   }
 
-  // Additional method to find loans by email
   async findByEmail(email: string): Promise<ApiResponse<Loan[]>> {
     try {
       const loans = await this.loanRepository.find({

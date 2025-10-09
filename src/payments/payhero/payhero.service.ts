@@ -1,5 +1,19 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import {
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import PayHero from 'payhero-wrapper';
+import { Loan, LoanStatus } from 'src/loans/entities/loan.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class PayheroService {
@@ -16,7 +30,10 @@ export class PayheroService {
 
   private payHeroService: PayHero;
 
-  constructor() {
+  constructor(
+    @InjectRepository(Loan)
+    private readonly loanRepository: Repository<Loan>,
+  ) {
     this.logger.log('🔐 PayHero Config loaded');
     this.payHeroService = new PayHero(this.payHeroConfig);
   }
@@ -37,46 +54,48 @@ export class PayheroService {
     try {
       const response = await this.payHeroService.makeStkPush(paymentDetails);
       this.logger.log(`✅ STK Response: ${JSON.stringify(response)}`);
+
+      // Update loan status to "pending"
+      await this.loanRepository.update(
+        { external_reference: externalReference },
+        { status: LoanStatus.PENDING },
+      );
+
       return response;
     } catch (error: any) {
-      // Handle Axios-style errors cleanly
       const errResp = error.response;
 
       if (errResp) {
-        // 🧠 PayHero / Axios error with response data
         const { status, data } = errResp;
 
-        // Log a clean, readable message
         this.logger.error(
           `❌ PayHero API Error [${status}]: ${JSON.stringify(data)}`,
         );
 
-        // Check for known PayHero error shape
-        if (data?.error_message || data?.error_code) {
-          throw new HttpException(
-            {
-              success: false,
-              message:
-                data.error_message || 'Payment request failed on provider side',
-              code: data.error_code || 'PAYHERO_ERROR',
-              providerStatus: status,
-            },
-            status || HttpStatus.BAD_REQUEST,
-          );
-        }
+        // Update loan status to "failed"
+        await this.loanRepository.update(
+          { external_reference: externalReference },
+          { status: LoanStatus.FAILED },
+        );
 
-        // Generic Axios API error
         throw new HttpException(
           {
             success: false,
-            message: 'Unexpected payment provider error',
-            details: data,
+            message:
+              data?.error_message || 'Payment request failed on provider side',
+            code: data?.error_code || 'PAYHERO_ERROR',
+            providerStatus: status,
           },
           status || HttpStatus.BAD_REQUEST,
         );
       } else if (error.request) {
-        // 🕓 No response (network issue or timeout)
         this.logger.error('❌ No response from PayHero API (network issue)');
+
+        await this.loanRepository.update(
+          { external_reference: externalReference },
+          { status: LoanStatus.FAILED },
+        );
+
         throw new HttpException(
           {
             success: false,
@@ -86,8 +105,13 @@ export class PayheroService {
           HttpStatus.GATEWAY_TIMEOUT,
         );
       } else {
-        // ⚙️ Non-Axios or unexpected error
         this.logger.error(`❌ PayHero Internal Error: ${error.message}`);
+
+        await this.loanRepository.update(
+          { external_reference: externalReference },
+          { status: LoanStatus.FAILED },
+        );
+
         throw new HttpException(
           {
             success: false,
@@ -101,11 +125,61 @@ export class PayheroService {
   }
 
   /**
-   * Handle async callback from PayHero (Pesapal)
+   * Handle payment callback from PayHero
    */
-  handleCallback(data: any) {
-    this.logger.log('📞 STK Callback Data:', data);
-    // Later update the loan table using externalReference
-    return { received: true };
+  async handleCallback(data: any) {
+    const extRef = data?.response?.ExternalReference;
+    const paymentStatus = data?.response?.Status?.toLowerCase();
+    this.logger.log('CallbackData', data);
+
+    if (!extRef) {
+      throw new HttpException(
+        { success: false, message: 'Missing external reference' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const existingLoan = await this.loanRepository.findOne({
+      where: { external_reference: extRef },
+    });
+
+    if (!existingLoan) {
+      throw new NotFoundException(
+        `Loan application with reference ${extRef} does not exist`,
+      );
+    }
+
+    // Map PayHero status → LoanStatus
+    const statusMap: Record<string, LoanStatus> = {
+      completed: LoanStatus.SUCCESS,
+      success: LoanStatus.SUCCESS,
+      failed: LoanStatus.FAILED,
+      cancelled: LoanStatus.FAILED,
+      pending: LoanStatus.PENDING,
+    };
+
+    const newStatus = statusMap[paymentStatus] || LoanStatus.PENDING;
+
+    await this.loanRepository.update(
+      { external_reference: extRef },
+      { status: newStatus },
+    );
+
+    this.logger.log(`💰 Payment status updated: ${extRef} → ${newStatus}`);
+
+    return { received: true, status: newStatus };
+  }
+
+  async getStatus(externalRef: string) {
+    const existingLoan = await this.loanRepository.findOne({
+      where: { external_reference: externalRef },
+    });
+    if (!existingLoan) {
+      throw new NotFoundException(
+        `Loan application with reference ${externalRef} does not exist`,
+      );
+    }
+
+    return existingLoan;
   }
 }

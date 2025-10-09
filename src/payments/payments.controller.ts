@@ -9,9 +9,9 @@ import {
   Put,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment } from './entities/payment.entity';
+import { PayheroService } from './payhero/payhero.service';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -22,13 +22,19 @@ interface ApiResponse<T = any> {
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly payheroService: PayheroService,
+  ) {}
 
-  @Post()
-  create(
-    @Body() createPaymentDto: CreatePaymentDto,
-  ): Promise<ApiResponse<Payment>> {
-    return this.paymentsService.create(createPaymentDto);
+  @Post('callback')
+  create(@Body() body: any) {
+    return this.payheroService.handleCallback(body);
+  }
+
+  @Get('status/:externalRef')
+  getStatus(@Param('externalRef') externalRef: string) {
+    return this.payheroService.getStatus(externalRef);
   }
 
   @Get()

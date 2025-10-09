@@ -22,6 +22,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   // logging: process.env.DB_LOGGING === 'true' ? true : false,
   // migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   autoLoadEntities: true,
-  synchronize: false, // Disable temporarily to fix schema issues
-  logging: false,
+  synchronize: true, // Disable temporarily to fix schema issues
+  logging: true,
 };
