@@ -32,6 +32,9 @@ export class Loan {
   @Column({ nullable: false })
   external_reference: string;
 
+  @Column({ nullable: true })
+  failure_reason: string;
+
   @Column({
     type: 'enum',
     enum: LoanStatus,

@@ -129,6 +129,7 @@ export class PayheroService {
    */
   async handleCallback(data: any) {
     const extRef = data?.response?.ExternalReference;
+    const failureReason = data?.response?.ResultDesc;
     const paymentStatus = data?.response?.Status?.toLowerCase();
     this.logger.log('CallbackData', data);
 
@@ -162,7 +163,11 @@ export class PayheroService {
 
     await this.loanRepository.update(
       { external_reference: extRef },
-      { status: newStatus },
+      {
+        status: newStatus,
+        failure_reason:
+          newStatus === LoanStatus.FAILED ? failureReason : 'An error occurred',
+      },
     );
 
     this.logger.log(`💰 Payment status updated: ${extRef} → ${newStatus}`);
